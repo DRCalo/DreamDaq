@@ -1,11 +1,11 @@
 #!/bin/bash
 
-cd /home/dreamtest/SPS.2021.08
+cd /home/dreamtest/SPS.2023.06
 
 DATE=`date +%Y.%m.%d`
 HOUR=`date +%H:%M`
 
-Exec=myReadOutNoStop
+Exec=myReadOutNoStop2023
 
 echo "Checking '$Exec' state at " $DATE " " $HOUR
 
@@ -14,11 +14,11 @@ sleep 1
 
 if [[ $daqPid != "" ]]; then
   echo "'$Exec' is running: PID is $daqPid"
-  echo "data file is" `ls -rt sps2021data.* | tail -1`
+  echo "data file is" `ls -rt sps2023data.* | tail -1`
   sleep 1
 else
   echo "'$Exec' is not running"
-  echo "last data file is" `ls -rt sps2021data.* | tail -1`
+  echo "last data file is" `ls -rt sps2023data.* | tail -1`
   sleep 1
 fi
 

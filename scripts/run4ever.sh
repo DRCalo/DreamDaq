@@ -15,7 +15,7 @@ while true; do
 	HOUR=`date +%H:%M`
 
 	echo "dead at " $DATE " " $HOUR
-	echo "data file is " `ls sps2021data.* | tail -1`
+	echo "data file is " `ls -rt sps2021data.* | tail -1`
 	sleep 1
 done
 

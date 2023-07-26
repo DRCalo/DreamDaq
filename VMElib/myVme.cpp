@@ -123,7 +123,8 @@ vme::vme(uint32_t base, uint32_t size, const char* dev)
     throw -1;
    }
 
-  m_VMEBoard = cvV2718;
+  // m_VMEBoard = cvV2718;
+  m_VMEBoard = cvV1718;
 
   am = whichVmeAm(dev_s.c_str());
 

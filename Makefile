@@ -39,7 +39,7 @@ ROOTLIBS        := `root-config --libs`
 LIBS            := -L$(VMELIBDIR) -lDreamVme -L$(FIFOLIBDIR) -lDreamFIFO -lpthread -lrt -lCAENDigitizer -lCAENComm -lCAENVME
 
 APPS            := guiStart pulserVme pulseOut testV792 testV862 testV262 testV513 setV812 setV814 setV258 setV258thr reader writer sampler \
-                  myDataWriter doOfflineHistoDrs4 myReadOut myReadOutDrs4 myFileChecker testInput enableOnOff testDAQ myTestReadout myReadOutCosmics myReadOutDesy myReadOutTDC myReadOutSPS2021 myReadOutNoStop fixLostTriggers
+                  myDataWriter doOfflineHistoDrs4 myReadOut myReadOutDrs4 myFileChecker testInput enableOnOff testDAQ myTestReadout myReadOutCosmics myReadOutDesy myReadOutTDC myReadOutSPS2021 myReadOutNoStop fixLostTriggers myReadOutSPS2023 myReadOutNoStop2023
 
 CONFFILE        := drs4command.list board_corrections.dat
 
@@ -131,7 +131,19 @@ setV258thr: setV258thr.o
 setV258thr.o: setV258thr.cpp
 	$(CPP) $(CPPFLAGS) -c $^
 
-readout: myReadOutNoStop myReadOutSPS2021 myReadOutTDC myReadOutDesy myReadOutCosmics myReadOut myReadOutDrs4
+readout: myReadOutNoStop2023 myReadOutSPS2023 myReadOutNoStop myReadOutSPS2021 myReadOutTDC myReadOutDesy myReadOutCosmics myReadOut myReadOutDrs4
+
+myReadOutNoStop2023.o: myReadOutNoStop2023.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutNoStop2023: myReadOutNoStop2023.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+myReadOutSPS2023.o: myReadOutSPS2023.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutSPS2023: myReadOutSPS2023.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
 
 myReadOutNoStop.o: myReadOutNoStop.cpp
 	$(CPP) $(CPPFLAGS) -c $^
