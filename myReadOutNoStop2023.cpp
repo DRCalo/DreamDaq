@@ -12,6 +12,7 @@
 #include "myV2718.h"                           // CAEN V2718 VME Bridge class
 #include "myV513.h"                            // CAEN V513 I/O REG class
 #include "myV792AC.h"                          // CAEN V792AC QDC class
+#include "myV862AC.h"
 #include "myV775N.h"                           // CAEN V775N TDC class
 #include "myV775.h"                            // CAEN V775 TDC class
 
@@ -31,7 +32,7 @@ using namespace std;
 #define V775_100ps 100                       // 100 ps as scale for V775
 #define V775_140ps 140                       // 140 ps as scale for V775
 
-const uint32_t nQDC = 3;
+const uint32_t nQDC = 2;
 const uint32_t QDCchans = 32;
 const uint32_t QDCevsize = QDCchans+2;
 const uint32_t QDCtotsize = QDCevsize*nQDC;
@@ -183,7 +184,7 @@ void initV792( v792ac& v792adc )
 void initV775N( v775n& xtdc )
  {
   xtdc.swReset();
-  xtdc.setCommon ( v775::commonStart );
+  xtdc.setCommon ( v775n::commonStart );
   xtdc.zeroSuppression(false);
   xtdc.overSuppression(false);
   xtdc.setLSB(V775_140ps);   // set the LSB (ps)  full scale = 4096*LSB ==> 100 ps * 4096 ~ 410 ns
@@ -235,87 +236,84 @@ void sigusr1_handler ( int32_t sig )
   pause_run ?  fprintf(stderr,"pausing run\n") : fprintf(stderr,"resuming run\n");
  }
 
-uint32_t resetHardware ( v792ac& qdc1, v792ac& qdc2, v792ac& qdc3, v775n& xtdc1, v775& xtdc2 )
+uint32_t resetHardware ( v792ac& qdc0, v792ac& qdc1, v775n& xtdc0 )
  {
+  initV792 ( qdc0 );
+  sched_yield();
+
   initV792 ( qdc1 );
   sched_yield();
 
-  initV792 ( qdc2 );
-  sched_yield();
-
-  initV792 ( qdc3 );
-  sched_yield();
-
-  initV775N ( xtdc1 );
-  sched_yield();
-
-  initV775 ( xtdc2 );
+  initV775N ( xtdc0 );
   sched_yield();
 
   return 0;
  }
 
-uint32_t alignEventCounter ( uint32_t evtnumber, v792ac& qdc1, v792ac& qdc2, v792ac& qdc3, v775n& xtdc1, v775& xtdc2 )
+uint32_t alignEventCounter ( uint32_t evtnumber, v792ac& qdc0, v792ac& qdc1, v775n& xtdc0 )
  {
+  qdc0.eventCounterOffset ( evtnumber );
   qdc1.eventCounterOffset ( evtnumber );
-  qdc2.eventCounterOffset ( evtnumber );
-  qdc3.eventCounterOffset ( evtnumber );
-  xtdc1.eventCounterOffset ( evtnumber );
-  xtdc2.eventCounterOffset ( evtnumber );
+  xtdc0.eventCounterOffset ( evtnumber );
 
   return 0;
  }
 
-uint32_t readEvent ( v792ac& qdc1, v792ac& qdc2, v792ac& qdc3, v775n& xtdc1, v775& xtdc2, uint32_t ntriggers, uint32_t* buffer, uint32_t* qdcsize, uint32_t* tdcsize1, uint32_t* tdcsize2 )
+uint64_t xreadtime(0);
+
+uint32_t readEvent ( v792ac& qdc0, v792ac& qdc1, v775n& xtdc0, uint32_t ntriggers, uint32_t* buffer, uint32_t* qdcsize, uint32_t* tdcsize )
  {
+  struct timeval startread;
+  gettimeofday ( &startread, NULL );
   nsleep(NSLEEPT);
+  qdc0.setEvents( ntriggers );
+  uint32_t size0 = qdc0.readEvent( buffer );
+  buffer += size0;
   qdc1.setEvents( ntriggers );
   uint32_t size1 = qdc1.readEvent( buffer );
   buffer += size1;
-  qdc1.setEvents( ntriggers );
-  uint32_t size2 = qdc2.readEvent( buffer );
-  buffer += size2;
-  qdc1.setEvents( ntriggers );
-  uint32_t size3 = qdc3.readEvent( buffer );
-  buffer += size3;
-  uint32_t sizetdc1 = xtdc1.readSingleEvent( buffer );
-  buffer += sizetdc1;
-  uint32_t sizetdc2 = xtdc2.readSingleEvent( buffer );
-  *qdcsize = size1+size2+size3;
-  *tdcsize1 = sizetdc1;
-  *tdcsize2 = sizetdc2;
-  uint32_t nevqdc1, nevqdc2, nevqdc3, nevtdc1, nevtdc2;
+  uint32_t sizetdc = xtdc0.readSingleEvent( buffer );
+  buffer += sizetdc;
+  *qdcsize = size0+size1;
+  *tdcsize = sizetdc;
+  uint32_t nevqdc0, nevqdc1, nevtdc0;
+  nevqdc0 = qdc0.eventCounter();
   nevqdc1 = qdc1.eventCounter();
-  nevqdc2 = qdc2.eventCounter();
-  nevqdc3 = qdc3.eventCounter();
-  nevtdc1 = xtdc1.eventCounter();
-  nevtdc2 = xtdc2.eventCounter();
-  uint32_t errcode = (ntriggers != nevqdc1) | (ntriggers != nevqdc2) << 1
-	| (ntriggers != nevqdc3) << 2 | (ntriggers != nevtdc1) << 3 | (ntriggers != nevtdc2) << 4;
-  if ((errcode == 0x1f) && (nevqdc1 == ntriggers+1)) errcode = 0xff;
+  nevtdc0 = xtdc0.eventCounter();
+  uint32_t errcode = (ntriggers != nevqdc0) | (ntriggers != nevqdc1) << 1
+	| (ntriggers != nevtdc0) << 2;
+  if ((errcode == 7) && (nevqdc0 == ntriggers+1)) errcode = 0xff;
   if (errcode)
    {
     time_t rtime = time(NULL);
     struct tm myrtime;
     localtime_r( &rtime, &myrtime );
-    cerr << " time is " << dec << rtime << " " << myrtime.tm_year+1900 << "." << myrtime.tm_mon+1 << "." << myrtime.tm_mday << "-" << myrtime.tm_hour << ":" << myrtime.tm_min << ":" << myrtime.tm_sec << endl;
-    cerr << dec << ntriggers << " nq1 " << nevqdc1 << " nq2 " << nevqdc2 << " nq3 " << nevqdc3 << " nt1 " << nevtdc1 << " nt2 " << nevtdc2 << " - error code " << hex << errcode << endl;
-   }
-  if (size1*size2*size3 == 0)
+    cerr << " time is " << dec << rtime << " " << myrtime.tm_year+1900 << "." << myrtime.tm_mon+1 << "." << myrtime.tm_mday << "-" << myrtime.tm_hour << ":" << myrtime.tm_min << ":" << myrtime.tm_sec << endl; 
+    cerr << dec << ntriggers << " nq0 " << nevqdc0 << " nq1 " << nevqdc1 << " nt0 " << nevtdc0 << " - error code " << hex << errcode << endl;
+   } 
+  if (size0*size1 == 0)
    {
     errcode |= 1 << 7;
     time_t rtime = time(NULL);
     struct tm myrtime;
     localtime_r( &rtime, &myrtime );
     cerr << " time is " << dec << rtime << " " << myrtime.tm_year+1900 << "." << myrtime.tm_mon+1 << "." << myrtime.tm_mday << "-" << myrtime.tm_hour << ":" << myrtime.tm_min << ":" << myrtime.tm_sec;
-    cerr << dec << ntriggers << " size1 " << size1 << " size2 " << size2 << " size3 " << size3 << " sizetdc1 " << sizetdc1 << " sizetdc2 " << sizetdc2 << " - error code " << hex << errcode << endl;
+    cerr << dec << ntriggers << " size0 " << size0 << " size1 " << size1 << " sizetdc " << sizetdc << " - error code " << hex << errcode << endl;
    }
+  struct timeval endread;
+  gettimeofday ( &endread, NULL );
+  xreadtime += (endread.tv_sec-startread.tv_sec)*ONEM
+		+ (endread.tv_usec-startread.tv_usec);
   return errcode;
  }
 
-void print_event ( ofstream& ofs, uint32_t trignum, uint32_t* Tcts, uint32_t tmask, uint32_t* myBuffer, uint32_t qdcsize, uint32_t tdcsize1, uint32_t tdcsize2 )
+void print_event ( ofstream& ofs, uint32_t trignum, struct timeval tod,  uint32_t spill_nr, uint32_t* Tcts, uint32_t tmask, uint32_t* myBuffer, uint32_t qdcsize, uint32_t tdcsize )
  {
-  ofs << dec << " ev # " << trignum << " tow cts " << Tcts[0] << " " << Tcts[1] << " " << Tcts[2] << " trigger mask " << hex << tmask << " values:";
+  struct tm * timeinfo = localtime ( &tod.tv_sec );
+  ofs << dec << " ev # " << trignum << " time " << timeinfo->tm_yday
+     << "-" << timeinfo->tm_hour << "-" << timeinfo->tm_min << "-"
+     << timeinfo->tm_sec << "-" << tod.tv_usec << " spill " << spill_nr
+     << " tow cts " << Tcts[0] << " " << Tcts[1] << " " << Tcts[2] << " trigger mask " << hex << tmask << " values:";
   for (uint32_t kqdc=0; kqdc<nQDC; kqdc++)
    {
     uint32_t offs = kqdc*QDCevsize;
@@ -327,25 +325,14 @@ void print_event ( ofstream& ofs, uint32_t trignum, uint32_t* Tcts, uint32_t tma
       ofs << " " << dec << chan << " " << hex << (myBuffer[j] & 0x3fff);
      }
    }
-  uint32_t tdcsize = tdcsize1 + tdcsize2;
   ofs << " TDC size " << dec << tdcsize << " val.s ";
   uint32_t* tdcbuffer = &myBuffer[qdcsize];
-  if (tdcsize1 != 0xffffffff) for (uint32_t j=0; j<tdcsize1; j++)
+  if (tdcsize != 0xffffffff) for (uint32_t j=0; j<tdcsize; j++)
    {
     uint32_t _v = tdcbuffer[j];
     uint32_t chan = dataDecodeNChannel(_v);
     uint32_t mk = dataDecodeNFlags(_v);
     uint32_t val = dataDecodeNValue(_v);
-    ofs << " " << chan << " " << mk << " " << val;
-   }
-  tdcbuffer = &myBuffer[qdcsize+tdcsize1];
-  if (tdcsize2 != 0xffffffff) for (uint32_t j=0; j<tdcsize2; j++)
-   {
-    uint32_t _v = tdcbuffer[j];
-    uint32_t chan = dataDecodeChannel(_v);
-    chan += V775Nchans;
-    uint32_t mk = dataDecodeFlags(_v);
-    uint32_t val = dataDecodeValue(_v);
     ofs << " " << chan << " " << mk << " " << val;
    }
   ofs << endl;
@@ -389,18 +376,16 @@ int main( int argc, char** argv )
 
   disableTriggers( ion );
 
-  v792ac qdc1(0x05000000,"/V2718/cvA32_U_DATA/0");      // V792 QDC
-  v792ac qdc2(0x06000000,"/V2718/cvA32_U_DATA/0");      // V792 QDC
-  v792ac qdc3(0x07000000,"/V2718/cvA32_U_DATA/0");      // V792 QDC
-  v775n xtdc1(0x08000000,"/V2718/cvA32_U_DATA/0");      // V775N TDC
-  v775 xtdc2(0x09000000,"/V2718/cvA32_U_DATA/0");       // V775 TDC
+  v792ac qdc0(0x05000000,"/V2718/cvA32_U_DATA/0");      // V792 QDC
+  v862ac qdc1(0x03000000,"/V2718/cvA32_U_DATA/0");      // V792 QDC
+  v775n xtdc0(0x08000000,"/V2718/cvA32_U_DATA/0");      // V775N TDC
 
-  // Init I/O Register
+  // Init I/O Register and QDC
   initV513 ( ion );
   sched_yield();
 
   // Init QDCs and TDCs
-  resetHardware ( qdc1, qdc2, qdc3, xtdc1, xtdc2 );
+  resetHardware ( qdc0, qdc1, xtdc0 );
 
   resetScaler( ion );
   unlockTrigger( ion );
@@ -426,7 +411,7 @@ int main( int argc, char** argv )
   
 
   stime -= 1600000000;
-  string fname = "sps2021data.run" + to_string(runnbr) + ".txt";
+  string fname = "sps2023data.run" + to_string(runnbr) + ".txt";
 
   if (argc == 2) fname = argv[1];
 
@@ -439,6 +424,10 @@ int main( int argc, char** argv )
 
   volatile bool exit_now(false);
   volatile bool on_error(false);
+
+  uint32_t spill_nr(0);
+  uint32_t lastsec = 1<<31;
+
   while (1)
    {
     if (abort_run) exit_now = true;
@@ -465,9 +454,11 @@ if ((trignum % 10000) == 0)
  {
   time_t tr = time(NULL) - tr0;
   double rate = trignum/double(tr);
+  double daqtime = xreadtime/double(trignum);
   cout << dec << tr << "(sec) " << trignum << "(evt) "
       << "beam/pede/inSpill/beamInSpill: "
-      << Tcts[0] << "/" << Tcts[1] << "/" << Tcts[2] << "/" << Tcts[3] << " "
+      << Tcts[0] << "/" << Tcts[1] << "/" << Tcts[2] << "/" << Tcts[3]
+      << " daqtime " << daqtime << " "
       << rate << "(evt/sec) last isPh " << isPh << " tmask " << hex << tmask
       << " ioreg " << ioregValue( ion ) << endl;
  }
@@ -476,8 +467,8 @@ if ((trignum % 10000) == 0)
       if (tmask & 4) Tcts[2] ++;            // in spill
       if ((tmask & 5) == 5) Tcts[3] ++;    // physics in spill
       (Tcts[1]*10 < Tcts[0]) ? enablePedestal( ion ) : disablePedestal( ion );
-      uint32_t qdcsize, tdcsize1, tdcsize2;
-      uint32_t retcode = readEvent ( qdc1, qdc2, qdc3, xtdc1, xtdc2, trignum, myBuffer, &qdcsize, &tdcsize1, &tdcsize2 );
+      uint32_t qdcsize, tdcsize;
+      uint32_t retcode = readEvent ( qdc0, qdc1, xtdc0, trignum, myBuffer, &qdcsize, &tdcsize );
       uint32_t head = myBuffer[0];
       uint32_t trail = myBuffer[qdcsize-1] & 0xff000000;
       uint32_t evnum = numevofs + (myBuffer[qdcsize-1] & 0xffffff);
@@ -516,7 +507,12 @@ if ((trignum % 10000) == 0)
         on_error = true;
         disableTriggers( ion );
        }
-      print_event ( ofs, trignum, Tcts, tmask, myBuffer, qdcsize, tdcsize1, tdcsize2 );
+      
+      struct timeval tod;
+      gettimeofday ( &tod, NULL );
+      if ((tod.tv_sec-lastsec) > 5) spill_nr ++ ;
+      lastsec = tod.tv_sec;
+      print_event ( ofs, trignum, tod, spill_nr, Tcts, tmask, myBuffer, qdcsize, tdcsize );
       trignum ++;
       // while (trignum <= evnum) trignum ++; // evt_realign ( ion, qdc, Tcts, ofs, trignum );
 
@@ -529,7 +525,7 @@ if ((trignum % 10000) == 0)
       if (on_error)
        {
         // Re-init QDCs and TDCs
-        cerr << dec << trignum << " ********* resetting DAQ ********* " << endl;
+                cerr << dec << trignum << " ********* resetting DAQ ********* " << endl;
         time_t rtime = time(NULL);
 
         cerr << " time is " << dec << rtime << endl;
@@ -540,9 +536,9 @@ if ((trignum % 10000) == 0)
         cerr << asctime(&myrtime) << endl;
 
         tmask |= 0xffff0000;
-        resetHardware ( qdc1, qdc2, qdc3, xtdc1, xtdc2 );
+        resetHardware ( qdc0, qdc1, xtdc0 );
         myusleep ( 100000 );
-        alignEventCounter ( trignum, qdc1, qdc2, qdc3, xtdc1, xtdc2 );
+        alignEventCounter ( trignum, qdc0, qdc1, xtdc0 );
         numevofs = trignum;
         myusleep ( 100000 );
         cerr << dec << trignum << " ********* reenabling triggers ********* " << endl;
@@ -572,7 +568,7 @@ if ((trignum % 10000) == 0)
   uint32_t tdiff = etime-stime;
   double rate = trignum/double(tdiff);
   cout << dec << " time is " << etime << " diff(sec) " << (etime-stime) << " events " << trignum
-	<< " rate(Hz) " << rate << endl;
+        << " rate(Hz) " << rate << endl;
 
   cout << " ****************** end of run ****************** " << endl << endl;
 

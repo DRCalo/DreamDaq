@@ -1,12 +1,12 @@
 #!/bin/bash
 
-cd /home/dreamtest/SPS.2021.08
+cd /home/dreamtest/SPS.2023.06
 
 DATE=`date +%Y.%m.%d`
 HOUR=`date +%H:%M`
 
-Exec=myReadOutNoStop
-StopScript=stopSPS2021nos.sh
+Exec=myReadOutNoStop2023
+StopScript=stopSPS2023nos.sh
 
 daqPid=`ps -aef | awk '{print $2 " " $8}' | grep $Exec | awk '{print $1}'`
 sleep 1
@@ -18,7 +18,7 @@ if [[ $daqPid != "" ]]; then
   sleep 1
   echo "you can use the script '$StopScript'"
   sleep 1
-  echo "data file is" `ls -rt sps2021data.* | tail -1`
+  echo "data file is" `ls -rt sps2023data.* | tail -1`
   sleep 1
 
 else
@@ -30,7 +30,7 @@ else
   echo "'$Exec' started"
   sleep 1
 
-  echo "data file is" `ls -rt sps2021data.* | tail -1`
+  echo "data file is" `ls -rt sps2023data.* | tail -1`
   sleep 1
 
   echo "please use the script '$StopScript' to stop the program"
@@ -41,7 +41,7 @@ else
   if [[ $daqPid != "" ]]; then
     echo "'$Exec' is running: PID is $daqPid"
     sleep 1
-    echo "data file is" `ls -rt sps2021data.* | tail -1`
+    echo "data file is" `ls -rt sps2023data.* | tail -1`
     sleep 1
     echo -n " ... 3"
     sleep 1
@@ -57,7 +57,7 @@ else
     sleep 1
     echo "Please take care: something went wrong"
     sleep 1
-    echo "last data file is" `ls -rt sps2021data.* | tail -1`
+    echo "last data file is" `ls -rt sps2023data.* | tail -1`
     sleep 1
   fi
 

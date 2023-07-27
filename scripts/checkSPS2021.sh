@@ -14,11 +14,11 @@ sleep 1
 
 if [[ $daqPid != "" ]]; then
   echo "'$Exec' is running: PID is $daqPid"
-  echo "data file is" `ls sps2021data.* | tail -1`
+  echo "data file is" `ls -rt sps2021data.* | tail -1`
   sleep 1
 else
   echo "'$Exec' is not running"
-  echo "last data file is" `ls sps2021data.* | tail -1`
+  echo "last data file is" `ls -rt sps2021data.* | tail -1`
   sleep 1
 fi
 
