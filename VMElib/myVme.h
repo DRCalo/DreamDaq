@@ -45,6 +45,7 @@ class vme {
   ~vme();                                                         // Destructor
   void print();                                                   // Simple dump function
   void init();
+  void systemReset();
 
   inline uint32_t getBaseAddr() { return ba; }
   inline uint32_t id() { return m_id; }
@@ -52,10 +53,10 @@ class vme {
    { m_name = std::string(name); m_id = id; }
 
   // Read/Write at module (local) physical address (base address subtracted)
-  int32_t read8phys(uint32_t addr, volatile uint8_t* data);
-  int32_t read16phys(uint32_t addr, volatile uint16_t* data);
-  int32_t read32phys(uint32_t addr, volatile uint32_t* data);
-  int32_t read32block(uint32_t addr, volatile uint8_t* buffer, int32_t howmany);
+  int32_t read8phys(uint32_t addr, uint8_t* data);
+  int32_t read16phys(uint32_t addr, uint16_t* data);
+  int32_t read32phys(uint32_t addr, uint32_t* data);
+  int32_t read32block(uint32_t addr, uint8_t* buffer, int32_t howmany);
   int32_t write8phys(uint32_t addr, uint8_t data);
   int32_t write16phys(uint32_t addr, uint16_t data);
   int32_t write32phys(uint32_t addr, uint32_t data);
@@ -103,8 +104,8 @@ class vme {
 /*****************************************/
 // VME Read / Write Functions
 /*****************************************/
-inline int32_t vme::read8phys(uint32_t addr, volatile uint8_t* data) {
-  volatile uint32_t t_data;
+inline int32_t vme::read8phys(uint32_t addr, uint8_t* data) {
+  uint32_t t_data;
   uint32_t t_addr = ba + addr;
   CVErrorCodes ret = CAENVME_ReadCycle(m_BHandle,t_addr,(uint32_t*)&t_data,am,cvD8);
   if (ret != cvSuccess) exit(1);
@@ -112,41 +113,44 @@ inline int32_t vme::read8phys(uint32_t addr, volatile uint8_t* data) {
   return 0;
 }
 inline int32_t vme::write8phys(uint32_t addr, uint8_t data) {
-  volatile uint32_t t_data = data;
+  uint32_t t_data = data;
   uint32_t t_addr = ba + addr;
   CVErrorCodes ret = CAENVME_WriteCycle(m_BHandle,t_addr,(uint32_t*)&t_data,am,cvD8);
   if (ret != cvSuccess) exit(1);
   return 0;
 }
 
-inline int32_t vme::read16phys(uint32_t addr, volatile uint16_t* data) {
-  volatile uint32_t t_data;
+inline int32_t vme::read16phys(uint32_t addr, uint16_t* data) {
+  uint32_t t_data;
   uint32_t t_addr = ba + addr;
   CVErrorCodes ret = CAENVME_ReadCycle(m_BHandle,t_addr,(uint32_t*)&t_data,am,cvD16);
-  if (ret != cvSuccess) exit(1);
+  if (ret != cvSuccess) exit(ret);
   *data = t_data & 0xffff;
   return 0;
 }
 inline int32_t vme::write16phys(uint32_t addr, uint16_t data) {
-  volatile uint32_t t_data = data;
+  uint32_t t_data = data;
   uint32_t t_addr = ba + addr;
   CVErrorCodes ret = CAENVME_WriteCycle(m_BHandle,t_addr,(uint32_t*)&t_data,am,cvD16);
   if (ret != cvSuccess) exit(1);
   return 0;
 }
 
-inline int32_t vme::read32block(uint32_t addr, volatile uint8_t* buffer, int32_t howmany) {
+inline int32_t vme::read32block(uint32_t addr, uint8_t* buffer, int32_t howmany) {
   uint32_t t_addr = ba + addr;
   int32_t expSize = howmany * 4;
   int32_t gotSize;
   CVErrorCodes ret = CAENVME_BLTReadCycle(m_BHandle,t_addr,(void*)buffer,expSize,am,cvD32,&gotSize);
-  if (gotSize != expSize) std::cout << " vme::read32block " << std::hex << t_addr << std::dec << " exp " << expSize << " got " << gotSize << std::endl;
-  if (ret != cvSuccess) exit(1);
+  if (ret != cvSuccess)
+   {
+    std::cerr << " CAENVME_BLTReadCycle returned " << ret << std::endl;
+    exit(1);
+   }
   return gotSize;
 }
 
-inline int32_t vme::read32phys(uint32_t addr, volatile uint32_t* data) {
-  volatile uint32_t t_data;
+inline int32_t vme::read32phys(uint32_t addr, uint32_t* data) {
+  uint32_t t_data;
   uint32_t t_addr = ba + addr;
   CVErrorCodes ret = CAENVME_ReadCycle(m_BHandle,t_addr,(uint32_t*)&t_data,am,cvD32);
   if (ret != cvSuccess) exit(1);
@@ -154,7 +158,7 @@ inline int32_t vme::read32phys(uint32_t addr, volatile uint32_t* data) {
   return 0;
 }
 inline int32_t vme::write32phys(uint32_t addr, uint32_t data) {
-  volatile uint32_t t_data = data;
+  uint32_t t_data = data;
   uint32_t t_addr = ba + addr;
   CVErrorCodes ret = CAENVME_WriteCycle(m_BHandle,t_addr,(uint32_t*)&t_data,am,cvD32);
   if (ret != cvSuccess) exit(1);
@@ -162,13 +166,13 @@ inline int32_t vme::write32phys(uint32_t addr, uint32_t data) {
 }
 
 inline uint32_t vme::getRegister(CVRegisters reg) {
-  volatile uint32_t data;
+  uint32_t data;
   CAENVME_ReadRegister(m_BHandle, reg, (uint32_t*)&data);
   return data;
 }
 
 inline uint32_t vme::getInputRegister() {
-  volatile uint32_t data;
+  uint32_t data;
   CAENVME_ReadRegister(m_BHandle, cvInputReg, (uint32_t*)&data);
   return data;
 }

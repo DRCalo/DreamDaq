@@ -146,21 +146,73 @@ uint32_t v2718::setPulserB( uint64_t period,  uint64_t width) {
 }
 
 uint32_t v2718::resetPulserA() {
-  CAENVME_StopPulser(m_BHandle, cvPulserA);
-  return 0;
+  return CAENVME_StopPulser(m_BHandle, cvPulserA);
 }
 
 uint32_t v2718::resetPulserB() {
-  CAENVME_StopPulser(m_BHandle, cvPulserB);
-  return 0;
+  return CAENVME_StopPulser(m_BHandle, cvPulserB);
+}
+
+uint32_t v2718::setOutputManual( CVOutputSelect output ) {
+   return CAENVME_SetOutputConf ( m_BHandle, output, cvDirect, cvActiveHigh, cvManualSW );
+}
+
+// typedef enum CVOutputSelect {
+//         cvOutput0 = 0,                  /* Identifies the output line 0                 */
+//         cvOutput1 = 1,                  /* Identifies the output line 1                 */
+//         cvOutput2 = 2,                  /* Identifies the output line 2                 */
+//         cvOutput3 = 3,                  /* Identifies the output line 3                 */
+//         cvOutput4 = 4                   /* Identifies the output line 4                 */
+// } CVOutputSelect;
+
+uint32_t v2718::setInput( CVInputSelect input ) {
+   return CAENVME_SetInputConf ( m_BHandle, input, cvDirect, cvActiveHigh );
+}
+
+// typedef enum CVInputSelect {
+//         cvInput0 = 0,                   /* Identifies the input line 0                  */
+//         cvInput1 = 1                    /* Identifies the input line 1                  */
+// } CVInputSelect;
+
+
+uint32_t v2718::readInputRegister( uint32_t* w ) {
+  return CAENVME_ReadRegister(m_BHandle, cvInputReg, w);
+}
+
+uint32_t v2718::writeOutputRegister( uint32_t w ) {
+  uint32_t mask = (w & 0x1f) << 5;
+  uint32_t ret1 = CAENVME_WriteRegister(m_BHandle, cvOutRegSet, mask);
+  mask = ~mask;
+  uint32_t ret2 = CAENVME_WriteRegister(m_BHandle, cvOutRegClear, mask);
+  return (ret1 | ret2);
+}
+
+uint32_t v2718::clearOutputRegister( uint32_t w ) {
+  uint32_t mask = (w & 0x1f) << 5;
+  return CAENVME_WriteRegister(m_BHandle, cvOutRegClear, mask);
+}
+
+uint32_t v2718::setOutputRegister( uint32_t w ) {
+  uint32_t mask = (w & 0x1f) << 5;
+  return CAENVME_WriteRegister(m_BHandle, cvOutRegSet, mask);
+}
+
+uint32_t v2718::clearOutputBit( uint32_t bit ) {
+  uint32_t mask = 1<<bit;
+  return CAENVME_WriteRegister(m_BHandle, cvOutRegClear, mask);
+}
+
+uint32_t v2718::setOutputBit( uint32_t bit ) {
+  uint32_t mask = 1<<bit;
+  return CAENVME_WriteRegister(m_BHandle, cvOutRegSet, mask);
 }
 
 /*****************************************/
 // Constructor
 /*****************************************/
-v2718::v2718(uint32_t base, const char* dev):vme(base, 0xFF, dev)
+v2718::v2718(const char* dev):vme(0, 0x100, dev)
 
  {
-  m_id = base | ID_V2718;
+  m_id = ID_V2718;
   m_name = "CAEN V2718 Controller";
  }

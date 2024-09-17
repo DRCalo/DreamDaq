@@ -85,7 +85,7 @@ uint32_t v775n::readSingleEvent(uint32_t *buf)
   // if ( !isDataReady() ) return 0;
   // cout << " 2 - v775n::readSingleEvent isBusy " << isBusy() << " isDataReady() " << isDataReady() << endl;
 
-  volatile uint32_t evc = this->evtCnt();
+  uint32_t evc = this->evtCnt();
   // cerr << " [V775N] " << hex << m_id << " data ready " << this->dready() << " ev counter " << dec << evc << endl;
   // if (evc == 0) return 0;
   if (evc == 0xffffff)
@@ -99,8 +99,8 @@ uint32_t v775n::readSingleEvent(uint32_t *buf)
   if ( !isWordValid(val) )
    { cerr << "[V775N]: Not valid data" << endl; return 0xffffffff; }
   
-  volatile uint32_t vol = val;
-  volatile uint32_t chs = dataDecodeNChCnt(vol);
+  uint32_t vol = val;
+  uint32_t chs = dataDecodeNChCnt(vol);
   for(uint32_t i=0; i < chs; i++)
    { 
     read32phys(0,&val); // printDataBody(val);

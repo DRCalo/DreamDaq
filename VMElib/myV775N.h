@@ -355,7 +355,7 @@ inline uint16_t v775n::stReg2()
    read16phys(0x1022,&i);
    return i;
   }
-inline bool v775n::dready()  { volatile uint16_t i; read16phys(0x100E, &i); return i&1;}
+inline bool v775n::dready()  { uint16_t i; read16phys(0x100E, &i); return i&1;}
 inline uint16_t v775n::evcLo()
   {
    uint16_t i;

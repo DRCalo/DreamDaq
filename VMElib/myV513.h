@@ -76,9 +76,12 @@ class v513 : public vme {
   void set0(int bit);                                         // Write 0 in bit 'bit' in Output Register
   void set1(int bit);                                         // Write 1 in bit 'bit' in Output Register
   void singlePulse(int bit);                                  // Write 1 0 in bit 'bit' in Output Register
-  
+
+  void setStrobeConf ( int chan );
+  void clearStrobe ();
+
  protected:
-  
+
  private:
    unsigned short m_status;
 };

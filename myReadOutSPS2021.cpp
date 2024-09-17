@@ -257,7 +257,7 @@ int main( int argc, char** argv )
   signal(SIGINT, cntrl_c_handler);      // Control-C handler
   signal(SIGUSR1, sigusr1_handler);      // Control-C handler
 
-  v2718 v2718_1(0,"/V2718/cvA24_U_DATA/0");            // VME interface
+  v2718 v2718_1("/V2718/cvA24_U_DATA/0");            // VME interface
   v513 ion(0xa00000,"/V2718/cvA24_U_DATA/0");          // I/O register
 
   disableTriggers( ion );

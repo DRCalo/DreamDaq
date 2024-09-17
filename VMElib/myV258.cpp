@@ -87,7 +87,7 @@ void v258::reset(){
 // Constructor
 /*****************************************/
 
-v258::v258(uint32_t base, const char* dev):vme(base, 0xFF, dev)
+v258::v258(uint32_t base, const char* dev):vme(base, 0x100, dev)
  {
   m_id = base | ID_V258;
   m_name = "CAEN V258 Discriminator";

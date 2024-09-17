@@ -29,7 +29,7 @@ LIBS           := -lpthread -lrt
 sources := DGTZconfig.cpp eventX742.cpp eventX742_corrections.cpp \
 	X742CorrectionRoutines.cpp X742DecodeRoutines.cpp \
 	myV1742.cpp myV262.cpp myV513.cpp myV775N.cpp myV775.cpp myV814.cpp myV258.cpp \
-	myV2718.cpp myV792AC.cpp myV862AC.cpp myVme.cpp sigHandler.cpp
+	myV2718.cpp myV792AC.cpp myV862AC.cpp myVme.cpp sigHandler.cpp myV259N.cpp
 
 objects := $(patsubst %.cpp,%.o,$(sources))
 

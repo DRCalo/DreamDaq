@@ -15,8 +15,7 @@ unsigned short v513::xreadInputRegister()
 { 
   unsigned short rc; 
   read16phys(0x04, &rc);
-  volatile unsigned short rcvol = rc;  
-  return rcvol;
+  return rc;
 }
 
 int v513::setChannelStatusRegister(int channel, unsigned short val)
@@ -115,6 +114,15 @@ void v513::set1(int bit) { clearOutputBit(bit); }
 
 // Please set in the V513 init setChannelStatusRegister(bit, 0x4) before to use this function;
 void v513::singlePulse(int bit) { pulseOutputBit(bit); }
+
+void v513::setStrobeConf ( int chan )
+ {
+  int conf = 0xC;
+  int addr = 0x10 + 2*chan;
+  write16phys( addr, conf );
+ }
+
+void v513::clearStrobe () { write16phys(0x44, 0); }
 
 /*****************************************/
 // Constructor

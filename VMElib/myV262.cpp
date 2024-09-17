@@ -18,7 +18,7 @@ void v262::reset()
 // Constructor
 /*****************************************/
 
-v262::v262(uint32_t base, const char* dev):vme(base, 0xFF, dev)
+v262::v262(uint32_t base, const char* dev):vme(base, 0x100, dev)
  {
   m_id = base | ID_V262;
   m_name = "CAEN V262 I/O Register";

@@ -96,8 +96,8 @@ inline int32_t  v792ac::getStatus2()              { uint16_t ga; read16phys(0x10
 inline int32_t  v792ac::getBit1()              { uint16_t ga; read16phys(0x1006, &ga); return ga; }
 inline int32_t  v792ac::getBit2()              { uint16_t ga; read16phys(0x1032, &ga); return ga; }
 inline int32_t  v792ac::dready(int32_t usec)       { m_usleep(usec); return dready(); }
-inline int32_t  v792ac::dready()                     { volatile uint16_t i; read16phys(0x100E, &i); return i&1;}
-inline int32_t  v792ac::busy()                       { volatile uint16_t i; read16phys(0x100E, &i); return (i>>2)&1;}
+inline int32_t  v792ac::dready()                     { uint16_t i; read16phys(0x100E, &i); return i&1;}
+inline int32_t  v792ac::busy()                       { uint16_t i; read16phys(0x100E, &i); return (i>>2)&1;}
 inline void v792ac::reset()                      { write16phys(0x1006, 0x80); m_usleep(1); write16phys(0x1008, 0x80); }
 inline void v792ac::singleShotReset()            { write16phys(0x1016, 0); }
 inline int32_t  v792ac::eventBufferEmpty()           { uint16_t i; read16phys(0x1022, &i); return (i>>1)&1; }

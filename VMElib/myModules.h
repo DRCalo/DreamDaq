@@ -33,6 +33,7 @@
 #define ID_V2718       0x28
 #define ID_V812        0x29
 #define ID_V775        0x2a
+#define ID_V259N       0x2b
 #define ID_SIPM        0x40
 
 /************************************************************************/

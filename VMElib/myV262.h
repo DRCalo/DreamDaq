@@ -49,7 +49,7 @@ write16phys(OFF,MASK); \
 #define V262_GETBIT(OFF,CH) do { \
 uint16_t val; \
 read16phys(OFF,&val); \
-volatile uint16_t vol; \
+uint16_t vol; \
 vol=val & (1<<CH); \
 return (vol >> CH); \
 } while(0)

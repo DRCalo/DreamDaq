@@ -170,12 +170,25 @@ vme::~vme()
 }
 
 /*****************************************/
-// Dump Function
+// System Reset Function
 /*****************************************/
-void vme::print() 
+void vme::systemReset()
 {
   cout << "*************************************\n";  
-  cout << m_name << " Caen VME Module / base " << hex << ba << dec << ", length " << length;
+  cout << m_name << " CAEN VME Module / base " << hex << ba << dec << ", length " << length;
+  cout << "\n system reset ";
+  cout << "\n*************************************" << endl;
+  CAENVME_SystemReset(m_BHandle);
+
+}
+
+/*****************************************/
+// Dump Function
+/*****************************************/
+void vme::print()
+{
+  cout << "*************************************\n";  
+  cout << m_name << " CAEN VME Module / base " << hex << ba << dec << ", length " << length;
   cout << "\n*************************************" << endl;
   return;
 }

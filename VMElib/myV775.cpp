@@ -85,12 +85,12 @@ uint32_t v775::readSingleEvent(uint32_t *buf)
   // if ( !isDataReady() ) return 0;
   // cout << " 2 - v775::readSingleEvent isBusy " << isBusy() << " isDataReady() " << isDataReady() << endl;
 
-  volatile uint32_t evc = this->evtCnt();
+  uint32_t evc = this->evtCnt();
   // cerr << " [V775] " << hex << m_id << " data ready " << this->dready() << " ev counter " << dec << evc << endl;
   // if (evc == 0) return 0;
   if (evc == 0xffffff)
    { cerr << "[V775]: " << hex << m_id << " Not valid event counter (= 0xffffff)" << dec << endl; m_usleep(100000); return 0xffffffff; }
-  volatile uint32_t val;
+  uint32_t val;
   uint32_t size=0;
 
   // Read the block header
@@ -99,8 +99,8 @@ uint32_t v775::readSingleEvent(uint32_t *buf)
   if ( !isWordValid(val) )
    { cerr << "[V775]: Not valid data" << endl; return 0xffffffff; }
   
-  volatile uint32_t vol = val;
-  volatile uint32_t chs = dataDecodeChCnt(vol);
+  uint32_t vol = val;
+  uint32_t chs = dataDecodeChCnt(vol);
   for(uint32_t i=0; i < chs; i++)
    { 
     read32phys(0,&val); // printDataBody(val);

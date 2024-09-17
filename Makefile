@@ -7,6 +7,7 @@ BINDIR          := $(HOME)/bin
 WRKDIR          := $(HOME)/working
 VMELIBDIR       := ./VMElib
 FIFOLIBDIR      := ./FIFOlib
+DAQCOMMONLIBDIR      := ./DAQcommonlib
 ROOTINC         := `root-config --cflags`
 
 F77             := g77
@@ -26,7 +27,7 @@ else
         XARCH := -m32
 endif
 
-CFLAGS          := -W -Wall -ansi $(XARCH) -pipe -g -O2 -mtune=core2 -fPIC -ftree-vectorize -fomit-frame-pointer -I$(VMELIBDIR) -I$(FIFOLIBDIR)
+CFLAGS          := -W -Wall -ansi $(XARCH) -pipe -g -O2 -mtune=core2 -fPIC -ftree-vectorize -fomit-frame-pointer -I$(VMELIBDIR) -I$(FIFOLIBDIR) -I${DAQCOMMONLIBDIR}
 CPPFLAGS        := $(CFLAGS)
 ifeq ($(GCC_VERSION),4.4.7)
 	CPPFLAGS += -std=gnu++0x
@@ -36,10 +37,10 @@ else ifeq ($(GCC_VERSION),4.9.1)
 	CPPFLAGS += -std=c++11
 endif
 ROOTLIBS        := `root-config --libs`
-LIBS            := -L$(VMELIBDIR) -lDreamVme -L$(FIFOLIBDIR) -lDreamFIFO -lpthread -lrt -lCAENDigitizer -lCAENComm -lCAENVME
+LIBS            := -L${DAQCOMMONLIBDIR} -lDAQcommon -L$(VMELIBDIR) -lDreamVme -L$(FIFOLIBDIR) -lDreamFIFO -lpthread -lrt -lCAENDigitizer -lCAENComm -lCAENVME
 
-APPS            := guiStart pulserVme pulseOut testV792 testV862 testV262 testV513 setV812 setV814 setV258 setV258thr reader writer sampler \
-                  myDataWriter doOfflineHistoDrs4 myReadOut myReadOutDrs4 myFileChecker testInput enableOnOff testDAQ myTestReadout myReadOutCosmics myReadOutDesy myReadOutTDC myReadOutSPS2021 myReadOutNoStop fixLostTriggers myReadOutSPS2023 myReadOutNoStop2023
+APPS            := guiStart pulserVme pulseOut testV792 testV862 testV262 testV513 readV513 initV513 resetV513 setV812 setV814 setV258 setV258thr reader writer sampler \
+                  myDataWriter doOfflineHistoDrs4 myReadOut myReadOutDrs4 myFileChecker testInput enableOnOff testDAQ myReadOutCosmics myReadOutDesy myReadOutTDC myReadOutSPS2021 myReadOutNoStop fixLostTriggers myReadOutSPS2023 myReadOutNoStop2023 myReadOutSPS2024 myReadOutNoStop2024.09.02 myReadOutNoStop2024 testReadout2024 myTestReadout myReadOutNoStop2024.08.30 testV259N myReadOutNoStopV2718 testV2718 incDaqSem isInSpill stopGracely daqLogic daqReadout
 
 CONFFILE        := drs4command.list board_corrections.dat
 
@@ -50,10 +51,70 @@ all: $(APPS)
 	@echo "        all done with g++ version `g++ -dumpversion`"
 	@echo "****************************************************"
 
+%.o: %.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+%: %.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+daqReadout: daqReadout.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+daqReadout.o: daqReadout.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+daqLogic: daqLogic.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+daqLogic.o: daqLogic.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+stopGracely: stopGracely.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+stopGracely.o: stopGracely.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+isInSpill: isInSpill.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+isInSpill.o: isInSpill.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+testV2718: testV2718.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+testV2718.o: testV2718.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutNoStopV2718: myReadOutNoStopV2718.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+myReadOutNoStopV2718.o: myReadOutNoStopV2718.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutNoStop2024.08.30: myReadOutNoStop2024.08.30.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+myReadOutNoStop2024.08.30.o: myReadOutNoStop2024.08.30.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+testV259N: testV259N.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+testV259N.o: testV259N.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
 myTestReadout: myTestReadout.o
 	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
 
 myTestReadout.o: myTestReadout.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+testReadout2024: testReadout2024.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+testReadout2024.o: testReadout2024.cpp
 	$(CPP) $(CPPFLAGS) -c $^
 
 testDAQ: testDAQ.o
@@ -107,6 +168,24 @@ testV513: testV513.o
 testV513.o: testV513.cpp
 	$(CPP) $(CPPFLAGS) -c $^
 
+readV513: readV513.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+initV513.o: initV513.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+initV513: initV513.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+resetV513.o: resetV513.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+resetV513: resetV513.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+readV513.o: readV513.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
 setV812: setV812.o
 	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
 
@@ -131,7 +210,31 @@ setV258thr: setV258thr.o
 setV258thr.o: setV258thr.cpp
 	$(CPP) $(CPPFLAGS) -c $^
 
-readout: myReadOutNoStop2023 myReadOutSPS2023 myReadOutNoStop myReadOutSPS2021 myReadOutTDC myReadOutDesy myReadOutCosmics myReadOut myReadOutDrs4
+incDaqSem: incDaqSem.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+incDaqSem.o: incDaqSem.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+readout: testReadout2024 myReadOutNoStop2024 myReadOutNoStop2024.09.02 myReadOutSPS2024 myReadOutNoStop2023 myReadOutSPS2023 myReadOutNoStop myReadOutSPS2021 myReadOutTDC myReadOutDesy myReadOutCosmics myReadOut myReadOutDrs4
+
+myReadOutNoStop2024.o: myReadOutNoStop2024.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutNoStop2024: myReadOutNoStop2024.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+myReadOutNoStop2024.09.02.o: myReadOutNoStop2024.09.02.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutNoStop2024.09.02: myReadOutNoStop2024.09.02.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
+
+myReadOutSPS2024.o: myReadOutSPS2024.cpp
+	$(CPP) $(CPPFLAGS) -c $^
+
+myReadOutSPS2024: myReadOutSPS2024.o
+	$(CPP) $(CPPFLAGS) -o $@ $^ $(LIBS)
 
 myReadOutNoStop2023.o: myReadOutNoStop2023.cpp
 	$(CPP) $(CPPFLAGS) -c $^

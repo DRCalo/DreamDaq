@@ -10,7 +10,7 @@
 
 using namespace std;
 
-v2718 v2718m(0,"/V2718/cvA24_U_DATA/0");
+v2718 v2718m("/V2718/cvA24_U_DATA/0");
 
 uint64_t rsec, rusec;
 uint64_t dsec, dusec;
