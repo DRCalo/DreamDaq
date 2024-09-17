@@ -44,7 +44,7 @@ testdaqcommon: testdaqcommon.o
 	$(CPP) $(CPPFLAGS) -c $^ -o $@
 
 clean:
-	rm -f libDDAQcommon.so *.o testdaqcommon
+	rm -f libDAQcommon.so *.o testdaqcommon
 
 headers:
 	@echo "nothing to be done here"
