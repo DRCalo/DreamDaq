@@ -51,22 +51,31 @@ if [[ $daqPid != "" ]]; then
   echo "process $daqPid asked to stop"
   sleep 1
 
-  echo "*********************************************"
-  echo "now killing process $daqPid"
-  sleep 1
-  kill -KILL $daqPid
-  echo "sent signal SIGKILL to process $daqPid"
-  sleep 1
+# check a third time
+  daqPid=`ps -aef | awk '{print $2 " " $8}' | grep $Exec | awk '{print $1}'`
+  
+  if [[ $daqPid != "" ]]; then
+    DATE=`date +%Y.%m.%d`
+    HOUR=`date +%H:%M`
 
-  DATE=`date +%Y.%m.%d`
-  HOUR=`date +%H:%M`
+    echo "*********************************************"
+    echo "now killing process $daqPid"
+    sleep 1
+    kill -KILL $daqPid
+    echo "sent signal SIGKILL to process $daqPid"
+    echo "'$Exec' killed at " $DATE " " $HOUR
 
-  echo "'$Exec' killed at " $DATE " " $HOUR
-  echo "data file is" `ls -rt sps2024data.* | tail -1`
+  else
+    echo "'$Exec' is no more running"
+    echo "all looks fine"
+
+  fi
 
 else
   echo "'$Exec' is no more running"
   echo "all looks fine"
 
 fi
+
+echo "data file is" `ls -rt sps2024data.* | tail -1`
 
